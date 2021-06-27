@@ -1,0 +1,45 @@
+version: '3'
+services:
+  service-db:
+    image: postgres:11
+    container_name: service-db
+    restart: on-failure
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=service_db
+    volumes: 
+      - ./.tmp:/var/lib/postgres/data
+    ports: 
+      - 5432:5432
+
+  service-migrations:
+    image: migrate/migrate
+    container_name: service-migrations
+    restart: on-failure
+    depends_on:
+      - service-db
+    volumes:
+      - ../scripts/wait-for-it.sh:/wait-for-it.sh
+      - ../../migrations:/migrations
+    entrypoint: []
+    command: /wait-for-it.sh service-db:5432 -- migrate -path=/migrations/ -database postgres://postgres:postgres@service-db:5432/service_db?sslmode=disable up
+
+  go-service:
+    build:
+      context: ../..
+    container_name: go-service
+    depends_on:
+      - service-db
+    ports:
+      - '8000:8000'
+    volumes:
+      - ../scripts/wait-for-it.sh:/wait-for-it.sh
+    restart: on-failure
+    environment:
+      - DB_DSN=host=service-db port=5432 user=postgres password=postgres dbname=service_db sslmode=disable
+      - SECRET=this_is_a_secret
+      - BCRYPT_COST=12
+      - ADDR=0.0.0.0:8000
+      - TIMEOUT=10
+    command: /wait-for-it.sh service-db:5432 -- /server

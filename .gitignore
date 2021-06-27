@@ -1,0 +1,15 @@
+# IDE and Git config files
+.idea
+.vscode
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+
+# Dependencies
+vendor
+
+# Temp files
+.log/*
+.tmp/*

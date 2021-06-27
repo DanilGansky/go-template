@@ -1,0 +1,25 @@
+# IDE and Git config files
+.git
+.idea
+.vscode
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+
+# Dependencies
+vendor
+
+# Docs
+docs/*
+postman/*
+swagger/*
+
+# Temp files
+.log/*
+.tmp/*
+
+# Misc
+deploy
+migrations

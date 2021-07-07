@@ -38,7 +38,6 @@ func main() {
 	authSvc := auth.NewService(hashSvc, tokenSvc, userSvc)
 
 	router := gin.Default()
-
 	authMiddleware := api.AuthorizationMiddleware(userSvc, tokenSvc)
 	api.NewUserController(userSvc, log, cfg.MaxTimeout(), router, authMiddleware)
 	api.NewAuthController(authSvc, userSvc, log, cfg.MaxTimeout(), router)

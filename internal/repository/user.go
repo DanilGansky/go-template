@@ -70,7 +70,8 @@ func (r *userRepo) Update(ctx context.Context, u *user.User) error {
 		prevUser.LastLogin = u.LastLogin
 	}
 
-	if err = r.db.WithContext(ctx).Save(prevUser).Error; err != nil {
+	err = r.db.WithContext(ctx).Save(prevUser).Error
+	if err != nil {
 		return errors.New(errors.InternalError, err)
 	}
 	return nil
@@ -82,7 +83,8 @@ func (r *userRepo) DeleteByID(ctx context.Context, id int) error {
 		return err
 	}
 
-	if err = r.db.Delete(&user.User{}, "id = ?", id).Error; err != nil {
+	err = r.db.WithContext(ctx).Delete(&user.User{}, "id = ?", id).Error
+	if err != nil {
 		return errors.New(errors.InternalError, err)
 	}
 	return nil

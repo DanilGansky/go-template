@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/littlefut/go-template/pkg/errors"
+
 	"github.com/gin-gonic/gin"
-	"github.com/littlefut/go-template/internal/auth"
 	"github.com/littlefut/go-template/internal/hash"
 	"github.com/littlefut/go-template/internal/user"
 )
@@ -16,7 +17,7 @@ func AuthorizationMiddleware(userSvc user.Service, tokenSvc hash.TokenService) g
 	return func(ctx *gin.Context) {
 		token := ctx.GetHeader("Authorization")
 		if token == "" {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, auth.ErrTokenDoesNotValid)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, ErrTokenDoesNotValid)
 			return
 		}
 		if strings.Contains(token, TokenPrefix) {
@@ -25,13 +26,13 @@ func AuthorizationMiddleware(userSvc user.Service, tokenSvc hash.TokenService) g
 
 		id, isValid := tokenSvc.Validate(token)
 		if !isValid {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, auth.ErrTokenDoesNotValid)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, ErrTokenDoesNotValid)
 			return
 		}
 
 		_, err := userSvc.FindByID(ctx, id)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, user.ErrNotFound)
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errors.New(errors.NotFoundError, err))
 			return
 		}
 

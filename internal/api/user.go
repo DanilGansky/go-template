@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/littlefut/go-template/pkg/errors"
+
 	"github.com/littlefut/go-template/internal/user"
-	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -37,19 +38,19 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 	var dto user.UpdateDTO
 	if err := ctx.Bind(&dto); err != nil {
 		c.log.Errorf("update user error: %s", err.Error())
-		ctx.Status(http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, errors.New(errors.ValidationError, err))
 		return
 	}
 
 	id, ok := ctx.Get("user_id")
 	if !ok {
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, ErrInvalidContext)
 		return
 	}
 
 	userID, ok := id.(int)
 	if !ok {
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, ErrInvalidContext)
 		return
 	}
 
@@ -58,16 +59,16 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 		var status int
 
 		switch errors.Cause(err) {
-		case user.ErrNotFound:
+		case errors.NotFoundError:
 			status = http.StatusNotFound
-		case user.ErrValidation:
+		case errors.ValidationError:
 			status = http.StatusBadRequest
 		default:
 			status = http.StatusInternalServerError
 		}
 
 		c.log.Errorf("update user error: %s with status: %d", err.Error(), status)
-		ctx.Status(status)
+		ctx.JSON(status, err)
 		return
 	}
 
@@ -80,13 +81,13 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 
 	id, ok := ctx.Get("user_id")
 	if !ok {
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, ErrInvalidContext)
 		return
 	}
 
 	userID, ok := id.(int)
 	if !ok {
-		ctx.Status(http.StatusInternalServerError)
+		ctx.JSON(http.StatusInternalServerError, ErrInvalidContext)
 		return
 	}
 
@@ -95,14 +96,14 @@ func (c *UserController) DeleteUser(ctx *gin.Context) {
 		var status int
 
 		switch errors.Cause(err) {
-		case user.ErrNotFound:
+		case errors.NotFoundError:
 			status = http.StatusNotFound
 		default:
 			status = http.StatusInternalServerError
 		}
 
 		c.log.Errorf("delete user error: %s with status: %d", err.Error(), status)
-		ctx.Status(status)
+		ctx.JSON(status, err)
 		return
 	}
 

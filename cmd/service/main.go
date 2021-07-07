@@ -2,39 +2,34 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 
+	"github.com/littlefut/go-template/pkg/db"
+
+	"github.com/littlefut/go-template/pkg/logger"
+
+	"github.com/littlefut/go-template/pkg/config"
+
 	"github.com/gin-gonic/gin"
-	"github.com/littlefut/go-template/config"
 	"github.com/littlefut/go-template/internal/api"
 	"github.com/littlefut/go-template/internal/auth"
 	"github.com/littlefut/go-template/internal/hash"
 	"github.com/littlefut/go-template/internal/repository"
 	"github.com/littlefut/go-template/internal/user"
-	"github.com/sirupsen/logrus"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func main() {
 	cfg := config.Get()
-	fmt.Printf("PROVIDED CONFIG: %v", cfg)
+	log := logger.Get(cfg.LogLevel())
+	dbConn := db.Get(cfg.DSN)
 
-	log := logrus.New()
-	log.SetFormatter(&logrus.TextFormatter{})
-	log.SetLevel(logrus.DebugLevel)
+	log.Debugf("PROVIDED CONFIG: %v", cfg)
 
-	db, err := gorm.Open(postgres.Open(cfg.DSN), &gorm.Config{})
-	if err != nil {
-		log.Panicf("failed to connect to db: %s", err.Error())
-	}
-
-	userRepo := repository.NewUserRepository(db)
+	userRepo := repository.NewUserRepository(dbConn)
 	hashSvc := hash.NewService(cfg.Cost)
-	tokenSvc, err := hash.NewTokenService(cfg.Secret)
+	tokenSvc, err := hash.NewTokenService(cfg.Secret, cfg.Issuer)
 	if err != nil {
 		log.Panicf("failed to create token service: %s", err.Error())
 	}

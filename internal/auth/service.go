@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/littlefut/go-template/pkg/errors"
 
 	"github.com/littlefut/go-template/internal/hash"
 	"github.com/littlefut/go-template/internal/user"
@@ -30,10 +30,10 @@ func NewService(hashSvc hash.Service, tokenSvc hash.TokenService, userSvc user.S
 
 func (s *service) Login(ctx context.Context, dto *LoginDTO) (*DTO, error) {
 	if dto.Username == "" {
-		return nil, errors.Wrap(ErrValidation, "username cannot be empty")
+		return nil, ErrEmptyUsername
 	}
 	if dto.Password == "" {
-		return nil, errors.Wrap(ErrValidation, "password cannot be empty")
+		return nil, ErrEmptyPassword
 	}
 
 	credentials, err := s.userSvc.FindCredentialsByUsername(ctx, dto.Username)
@@ -46,7 +46,7 @@ func (s *service) Login(ctx context.Context, dto *LoginDTO) (*DTO, error) {
 
 	token, err := s.tokenSvc.Generate(credentials.ID)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(errors.InternalError, err)
 	}
 
 	err = s.userSvc.SetLastLogin(ctx, credentials.ID, time.Now())

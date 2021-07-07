@@ -1,22 +1,24 @@
+.PHONY: deps run build build-release clean test lint
+
 deps:
 	go mod download
 
 run:
 	cd deploy/local && docker-compose up --build --remove-orphans
 
-build:
+build: clean
 	go build -o ./bin/server ./cmd/service/main.go
 
-build-release:
+build-release: clean
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/server ./cmd/service/main.go
 
 clean:
 	rm -rf ./bin
 
-test: # runs tests
+test:
 	go test -cover -v ./...
 
-lint: # runs linter
+lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.40.0
 	./bin/golangci-lint run ./...
 	rm -rf ./bin

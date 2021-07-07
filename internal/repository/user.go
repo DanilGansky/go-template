@@ -2,10 +2,10 @@ package repository
 
 import (
 	"context"
-	"fmt"
+
+	"github.com/littlefut/go-template/pkg/errors"
 
 	"github.com/littlefut/go-template/internal/user"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -20,10 +20,10 @@ func NewUserRepository(db *gorm.DB) user.Repository {
 func (r *userRepo) FindByID(ctx context.Context, id int) (*user.User, error) {
 	var u user.User
 	if err := r.db.WithContext(ctx).First(&u, "id = ?", id).Error; err != nil {
-		if errors.Cause(err) == gorm.ErrRecordNotFound {
-			return nil, errors.Wrap(user.ErrNotFound, fmt.Sprintf("user with id '%d' not found", id))
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New(errors.NotFoundError, "user with id '%d' not found", id)
 		}
-		return nil, errors.Wrap(err, "internal error")
+		return nil, errors.New(errors.InternalError, err)
 	}
 
 	return &u, nil
@@ -32,10 +32,10 @@ func (r *userRepo) FindByID(ctx context.Context, id int) (*user.User, error) {
 func (r *userRepo) FindByUsername(ctx context.Context, username string) (*user.User, error) {
 	var u user.User
 	if err := r.db.WithContext(ctx).First(&u, "username = ?", username).Error; err != nil {
-		if errors.Cause(err) == gorm.ErrRecordNotFound {
-			return nil, errors.Wrap(user.ErrNotFound, fmt.Sprintf("user with username '%s' not found", username))
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New(errors.NotFoundError, "user with username '%s' not found", username)
 		}
-		return nil, errors.Wrap(err, "internal error")
+		return nil, errors.New(errors.InternalError, err)
 	}
 
 	return &u, nil
@@ -44,34 +44,34 @@ func (r *userRepo) FindByUsername(ctx context.Context, username string) (*user.U
 func (r *userRepo) Save(ctx context.Context, u *user.User) error {
 	_, err := r.FindByID(ctx, u.ID)
 	if err == nil {
-		return fmt.Errorf("user with id: '%d' already exists", u.ID)
+		return errors.New(errors.DuplicateError, "user with id: '%d' already exists", u.ID)
 	}
-	if errors.Cause(err) == user.ErrInternalError {
-		return errors.Wrap(err, "failed to create user")
+	if errors.Is(err, errors.InternalError) {
+		return err
 	}
 
 	err = r.db.WithContext(ctx).Create(u).Error
 	if err != nil {
-		return errors.Wrap(err, "failed to create user")
+		return errors.New(errors.InternalError, err)
 	}
 	return nil
 }
 
 func (r *userRepo) Update(ctx context.Context, u *user.User) error {
-	user, err := r.FindByID(ctx, u.ID)
+	prevUser, err := r.FindByID(ctx, u.ID)
 	if err != nil {
-		return errors.Wrap(err, "failed to update user")
+		return err
 	}
 
 	if u.Username != "" {
-		user.Username = u.Username
+		prevUser.Username = u.Username
 	}
 	if !u.LastLogin.IsZero() {
-		user.LastLogin = u.LastLogin
+		prevUser.LastLogin = u.LastLogin
 	}
 
-	if err := r.db.WithContext(ctx).Save(user).Error; err != nil {
-		return errors.Wrap(err, "failed to create user")
+	if err = r.db.WithContext(ctx).Save(prevUser).Error; err != nil {
+		return errors.New(errors.InternalError, err)
 	}
 	return nil
 }
@@ -79,11 +79,11 @@ func (r *userRepo) Update(ctx context.Context, u *user.User) error {
 func (r *userRepo) DeleteByID(ctx context.Context, id int) error {
 	_, err := r.FindByID(ctx, id)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete user")
+		return err
 	}
 
-	if err := r.db.Delete(&user.User{}, "id = ?", id).Error; err != nil {
-		return errors.Wrap(err, "internal error")
+	if err = r.db.Delete(&user.User{}, "id = ?", id).Error; err != nil {
+		return errors.New(errors.InternalError, err)
 	}
 	return nil
 }

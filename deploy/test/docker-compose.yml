@@ -1,0 +1,26 @@
+version: '3'
+services:
+  service-db-test:
+    image: postgres:11
+    container_name: service-db-test
+    restart: on-failure
+    environment: 
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=service_db_test
+    volumes: 
+      - ./.tmp:/var/lib/postgres/data
+    ports: 
+      - 5433:5432
+
+  service-migrations-test:
+    image: migrate/migrate
+    container_name: service-migrations-test
+    restart: on-failure
+    depends_on:
+      - service-db-test
+    volumes:
+      - ../scripts/wait-for-it.sh:/wait-for-it.sh
+      - ../../migrations:/migrations
+    entrypoint: []
+    command: /wait-for-it.sh service-db-test:5432 -- migrate -path=/migrations/ -database postgres://postgres:postgres@service-db-test:5432/service_db_test?sslmode=disable up

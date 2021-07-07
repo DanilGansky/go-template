@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/littlefut/go-template/pkg/errors"
+
 	"github.com/littlefut/go-template/internal/auth"
 	"github.com/littlefut/go-template/internal/user"
-	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -39,7 +40,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 	var dto auth.LoginDTO
 	if err := ctx.Bind(&dto); err != nil {
 		c.log.Errorf("login error: %s", err.Error())
-		ctx.Status(http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, errors.New(errors.ValidationError, err))
 		return
 	}
 
@@ -48,21 +49,20 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		var status int
 
 		switch errors.Cause(err) {
-		case user.ErrNotFound:
+		case errors.NotFoundError:
 			status = http.StatusNotFound
-		case user.ErrValidation:
+		case errors.ValidationError:
 			status = http.StatusBadRequest
-		case auth.ErrInvalidPassword:
-			status = http.StatusUnauthorized
 		default:
 			status = http.StatusInternalServerError
 		}
 
 		c.log.Errorf("login error: %s with status: %d", err.Error(), status)
-		ctx.Status(status)
+		ctx.JSON(status, err)
 		return
 	}
 
+	ctx.Set("Content-Type", "application/json")
 	ctx.JSON(http.StatusOK, token)
 }
 
@@ -73,7 +73,7 @@ func (c *AuthController) Register(ctx *gin.Context) {
 	var dto user.RegisterDTO
 	if err := ctx.Bind(&dto); err != nil {
 		c.log.Errorf("register error: %s", err.Error())
-		ctx.Status(http.StatusBadRequest)
+		ctx.JSON(http.StatusBadRequest, errors.New(errors.ValidationError, err))
 		return
 	}
 
@@ -82,16 +82,16 @@ func (c *AuthController) Register(ctx *gin.Context) {
 		var status int
 
 		switch errors.Cause(err) {
-		case user.ErrNotFound:
+		case errors.NotFoundError:
 			status = http.StatusNotFound
-		case user.ErrValidation:
+		case errors.ValidationError:
 			status = http.StatusBadRequest
 		default:
 			status = http.StatusInternalServerError
 		}
 
 		c.log.Errorf("register error: %s with status: %d", err.Error(), status)
-		ctx.Status(status)
+		ctx.JSON(status, err)
 		return
 	}
 

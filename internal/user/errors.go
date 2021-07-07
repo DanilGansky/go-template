@@ -1,9 +1,9 @@
 package user
 
-import "errors"
+import "github.com/littlefut/go-template/pkg/errors"
 
 var (
-	ErrInternalError = errors.New("internal error")
-	ErrNotFound      = errors.New("failed to find user")
-	ErrValidation    = errors.New("validation error")
+	ErrEmptyUsername  = errors.New(errors.ValidationError, "username cannot be empty")
+	ErrEmptyPassword  = errors.New(errors.ValidationError, "password cannot be empty")
+	ErrEmptyLastLogin = errors.New(errors.ValidationError, "lastLogin cannot be empty")
 )

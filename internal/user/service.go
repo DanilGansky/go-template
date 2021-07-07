@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/littlefut/go-template/pkg/errors"
+
 	"github.com/littlefut/go-template/internal/hash"
-	"github.com/pkg/errors"
 )
 
 type Service interface {
@@ -29,15 +30,15 @@ func NewService(hashSvc hash.Service, repo Repository) Service {
 
 func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 	if dto.Username == "" {
-		return errors.Wrap(ErrValidation, "username cannot be empty")
+		return ErrEmptyUsername
 	}
 	if dto.Password == "" {
-		return errors.Wrap(ErrValidation, "password cannot be empty")
+		return ErrEmptyPassword
 	}
 
 	hashedPassword, err := s.hashSvc.Encrypt(dto.Password)
 	if err != nil {
-		return errors.Wrap(ErrValidation, err.Error())
+		return errors.New(errors.InternalError, err.Error())
 	}
 
 	user := User{
@@ -47,19 +48,19 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 	}
 
 	if err = s.repo.Save(ctx, &user); err != nil {
-		return err
+		return errors.New(errors.InternalError, err.Error())
 	}
 	return nil
 }
 
 func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error {
 	if dto.Username == "" {
-		return errors.Wrap(ErrValidation, "username cannot be empty")
+		return ErrEmptyUsername
 	}
 
 	err := s.repo.Update(ctx, &User{ID: id, Username: dto.Username})
 	if err != nil {
-		return err
+		return errors.New(errors.InternalError, err.Error())
 	}
 	return nil
 }
@@ -67,7 +68,7 @@ func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(errors.NotFoundError, err.Error())
 	}
 
 	dto := DTO{
@@ -81,7 +82,7 @@ func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 func (s *service) FindCredentialsByUsername(ctx context.Context, username string) (*CredentialsDTO, error) {
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return nil, err
+		return nil, errors.New(errors.NotFoundError, err.Error())
 	}
 
 	return &CredentialsDTO{
@@ -95,7 +96,7 @@ func (s *service) FindCredentialsByUsername(ctx context.Context, username string
 
 func (s *service) SetLastLogin(ctx context.Context, id int, lastLogin time.Time) error {
 	if lastLogin.IsZero() {
-		return errors.Wrap(ErrValidation, "lastLogin cannot be empty")
+		return ErrEmptyLastLogin
 	}
 
 	err := s.repo.Update(ctx, &User{ID: id, LastLogin: lastLogin})
@@ -108,7 +109,7 @@ func (s *service) SetLastLogin(ctx context.Context, id int, lastLogin time.Time)
 func (s *service) Delete(ctx context.Context, id int) error {
 	err := s.repo.DeleteByID(ctx, id)
 	if err != nil {
-		return err
+		return errors.New(errors.NotFoundError, err.Error())
 	}
 	return nil
 }

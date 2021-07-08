@@ -11,11 +11,13 @@ import (
 
 type Service interface {
 	Register(ctx context.Context, dto *RegisterDTO) error
-	SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 
 	FindByID(ctx context.Context, id int) (*DTO, error)
-	FindCredentialsByUsername(ctx context.Context, username string) (*CredentialsDTO, error)
+	FindByUsername(ctx context.Context, username string) (*DTO, error)
+
+	SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 	SetLastLogin(ctx context.Context, id int, lastLogin time.Time) error
+
 	Delete(ctx context.Context, id int) error
 }
 
@@ -53,6 +55,22 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 	return nil
 }
 
+func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
+	user, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, errors.New(errors.NotFoundError, err.Error())
+	}
+	return MakeDTO(user), nil
+}
+
+func (s *service) FindByUsername(ctx context.Context, username string) (*DTO, error) {
+	user, err := s.repo.FindByUsername(ctx, username)
+	if err != nil {
+		return nil, errors.New(errors.NotFoundError, err.Error())
+	}
+	return MakeDTO(user), nil
+}
+
 func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error {
 	if dto.Username == "" {
 		return ErrEmptyUsername
@@ -63,35 +81,6 @@ func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 		return errors.New(errors.InternalError, err.Error())
 	}
 	return nil
-}
-
-func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
-	user, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err.Error())
-	}
-
-	dto := DTO{
-		Username:  user.Username,
-		LastLogin: user.LastLogin.Format("02 Jan 06 15:04 MST"),
-		JoinedAt:  user.JoinedAt.Format("02 Jan 06 15:04 MST"),
-	}
-	return &dto, nil
-}
-
-func (s *service) FindCredentialsByUsername(ctx context.Context, username string) (*CredentialsDTO, error) {
-	user, err := s.repo.FindByUsername(ctx, username)
-	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err.Error())
-	}
-
-	return &CredentialsDTO{
-		ID:        user.ID,
-		Username:  user.Username,
-		Password:  user.Password,
-		JoinedAt:  user.JoinedAt.Format("02 Jan 06 15:04 MST"),
-		LastLogin: user.LastLogin.Format("02 Jan 06 15:04 MST"),
-	}, nil
 }
 
 func (s *service) SetLastLogin(ctx context.Context, id int, lastLogin time.Time) error {

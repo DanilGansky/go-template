@@ -5,7 +5,7 @@ type LoginDTO struct {
 	Password string `json:"password"`
 }
 
-type DTO struct {
+type LoggedInDTO struct {
 	Username  string `json:"username"`
 	LastLogin string `json:"last_login"`
 	JoinedAt  string `json:"joined_at"`

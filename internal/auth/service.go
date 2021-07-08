@@ -11,7 +11,7 @@ import (
 )
 
 type Service interface {
-	Login(ctx context.Context, dto *LoginDTO) (*DTO, error)
+	Login(ctx context.Context, dto *LoginDTO) (*LoggedInDTO, error)
 }
 
 type service struct {
@@ -28,7 +28,7 @@ func NewService(hashSvc hash.Service, tokenSvc hash.TokenService, userSvc user.S
 	}
 }
 
-func (s *service) Login(ctx context.Context, dto *LoginDTO) (*DTO, error) {
+func (s *service) Login(ctx context.Context, dto *LoginDTO) (*LoggedInDTO, error) {
 	if dto.Username == "" {
 		return nil, ErrEmptyUsername
 	}
@@ -36,28 +36,22 @@ func (s *service) Login(ctx context.Context, dto *LoginDTO) (*DTO, error) {
 		return nil, ErrEmptyPassword
 	}
 
-	credentials, err := s.userSvc.FindCredentialsByUsername(ctx, dto.Username)
+	userDTO, err := s.userSvc.FindByUsername(ctx, dto.Username)
 	if err != nil {
 		return nil, err
 	}
-	if !s.hashSvc.Compare(credentials.Password, dto.Password) {
+	if !s.hashSvc.Compare(userDTO.Password, dto.Password) {
 		return nil, ErrInvalidPassword
 	}
 
-	token, err := s.tokenSvc.Generate(credentials.ID)
+	token, err := s.tokenSvc.Generate(userDTO.ID)
 	if err != nil {
 		return nil, errors.New(errors.InternalError, err)
 	}
 
-	err = s.userSvc.SetLastLogin(ctx, credentials.ID, time.Now())
-	if err != nil {
+	lastLogin := time.Now()
+	if err = s.userSvc.SetLastLogin(ctx, userDTO.ID, lastLogin); err != nil {
 		return nil, err
 	}
-
-	return &DTO{
-		Username:  credentials.Username,
-		LastLogin: time.Now().Format("02 Jan 06 15:04 MST"),
-		JoinedAt:  credentials.JoinedAt,
-		Token:     token,
-	}, nil
+	return MakeLoggedInDTO(userDTO, token, lastLogin), nil
 }

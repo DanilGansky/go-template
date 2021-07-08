@@ -62,7 +62,6 @@ func (c *AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Set("Content-Type", "application/json")
 	ctx.JSON(http.StatusOK, token)
 }
 

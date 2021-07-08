@@ -40,7 +40,7 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 
 	hashedPassword, err := s.hashSvc.Encrypt(dto.Password)
 	if err != nil {
-		return errors.New(errors.InternalError, err.Error())
+		return errors.New(errors.InternalError, err)
 	}
 
 	user := User{
@@ -50,7 +50,7 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 	}
 
 	if err = s.repo.Save(ctx, &user); err != nil {
-		return errors.New(errors.InternalError, err.Error())
+		return errors.New(errors.InternalError, err)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err.Error())
+		return nil, errors.New(errors.NotFoundError, err)
 	}
 	return MakeDTO(user), nil
 }
@@ -66,7 +66,7 @@ func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 func (s *service) FindByUsername(ctx context.Context, username string) (*DTO, error) {
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err.Error())
+		return nil, errors.New(errors.NotFoundError, err)
 	}
 	return MakeDTO(user), nil
 }
@@ -78,7 +78,7 @@ func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 
 	err := s.repo.Update(ctx, &User{ID: id, Username: dto.Username})
 	if err != nil {
-		return errors.New(errors.InternalError, err.Error())
+		return errors.New(errors.InternalError, err)
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func (s *service) SetLastLogin(ctx context.Context, id int, lastLogin time.Time)
 func (s *service) Delete(ctx context.Context, id int) error {
 	err := s.repo.DeleteByID(ctx, id)
 	if err != nil {
-		return errors.New(errors.NotFoundError, err.Error())
+		return errors.New(errors.NotFoundError, err)
 	}
 	return nil
 }

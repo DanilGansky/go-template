@@ -42,9 +42,9 @@ func (r *userRepo) FindByUsername(ctx context.Context, username string) (*user.U
 }
 
 func (r *userRepo) Save(ctx context.Context, u *user.User) error {
-	_, err := r.FindByID(ctx, u.ID)
+	_, err := r.FindByUsername(ctx, u.Username)
 	if err == nil {
-		return errors.New(errors.DuplicateError, "user with id: '%d' already exists", u.ID)
+		return errors.New(errors.DuplicateError, "user '%s' already exists", u.Username)
 	}
 	if errors.Is(err, errors.InternalError) {
 		return err

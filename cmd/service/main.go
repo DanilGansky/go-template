@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"net/http"
-	"os"
-	"os/signal"
 
 	"github.com/littlefut/go-template/pkg/db"
+	"github.com/littlefut/go-template/pkg/server"
 
 	"github.com/littlefut/go-template/pkg/logger"
 
@@ -42,30 +40,8 @@ func main() {
 	api.NewUserController(userSvc, log, cfg.MaxTimeout(), router, authMiddleware)
 	api.NewAuthController(authSvc, userSvc, log, cfg.MaxTimeout(), router)
 
-	server := http.Server{
-		Addr:    cfg.Addr,
-		Handler: router,
-	}
-
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, os.Interrupt)
-
-	go func() {
-		log.Infof("server started at: %s", cfg.Addr)
-		if err = server.ListenAndServe(); err != nil {
-			if err != http.ErrServerClosed {
-				log.Fatalf("server error: %s", err.Error())
-			}
-		}
-	}()
-
-	<-signals
-	log.Info("shutting down...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.MaxTimeout())
-	defer cancel()
-
-	if err = server.Shutdown(ctx); err != nil {
-		log.Warnf("shutdown error: %s", err.Error())
+	httpServer := &http.Server{Addr: cfg.Addr, Handler: router}
+	if err = server.Run(httpServer, cfg.MaxTimeout(), log); err != nil {
+		log.Fatalf("shutdown error: %v", err)
 	}
 }

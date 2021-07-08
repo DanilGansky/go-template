@@ -48,17 +48,13 @@ func (s *service) Register(ctx context.Context, dto *RegisterDTO) error {
 		Password: hashedPassword,
 		JoinedAt: time.Now(),
 	}
-
-	if err = s.repo.Save(ctx, &user); err != nil {
-		return errors.New(errors.InternalError, err)
-	}
-	return nil
+	return s.repo.Save(ctx, &user)
 }
 
 func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 	user, err := s.repo.FindByID(ctx, id)
 	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err)
+		return nil, err
 	}
 	return MakeDTO(user), nil
 }
@@ -66,7 +62,7 @@ func (s *service) FindByID(ctx context.Context, id int) (*DTO, error) {
 func (s *service) FindByUsername(ctx context.Context, username string) (*DTO, error) {
 	user, err := s.repo.FindByUsername(ctx, username)
 	if err != nil {
-		return nil, errors.New(errors.NotFoundError, err)
+		return nil, err
 	}
 	return MakeDTO(user), nil
 }
@@ -75,30 +71,16 @@ func (s *service) SetUsername(ctx context.Context, id int, dto *UpdateDTO) error
 	if dto.Username == "" {
 		return ErrEmptyUsername
 	}
-
-	err := s.repo.Update(ctx, &User{ID: id, Username: dto.Username})
-	if err != nil {
-		return errors.New(errors.InternalError, err)
-	}
-	return nil
+	return s.repo.Update(ctx, &User{ID: id, Username: dto.Username})
 }
 
 func (s *service) SetLastLogin(ctx context.Context, id int, lastLogin time.Time) error {
 	if lastLogin.IsZero() {
 		return ErrEmptyLastLogin
 	}
-
-	err := s.repo.Update(ctx, &User{ID: id, LastLogin: lastLogin})
-	if err != nil {
-		return err
-	}
-	return nil
+	return s.repo.Update(ctx, &User{ID: id, LastLogin: lastLogin})
 }
 
 func (s *service) Delete(ctx context.Context, id int) error {
-	err := s.repo.DeleteByID(ctx, id)
-	if err != nil {
-		return errors.New(errors.NotFoundError, err)
-	}
-	return nil
+	return s.repo.DeleteByID(ctx, id)
 }

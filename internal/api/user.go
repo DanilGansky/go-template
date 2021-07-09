@@ -21,8 +21,13 @@ type UserController struct {
 	timeout time.Duration
 }
 
-func NewUserController(userSvc user.Service, log *logrus.Logger, timeout time.Duration, r *gin.Engine, middlewares ...gin.HandlerFunc) *UserController {
-	c := &UserController{r, userSvc, log, timeout}
+func NewUserController(userSvc user.Service, opts *Options, middlewares ...gin.HandlerFunc) *UserController {
+	c := &UserController{
+		Engine:  opts.Router,
+		userSvc: userSvc,
+		log:     opts.Log,
+		timeout: opts.Timeout,
+	}
 
 	group := c.Group("/users")
 	group.Use(middlewares...)

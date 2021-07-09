@@ -37,8 +37,14 @@ func main() {
 
 	router := gin.Default()
 	authMiddleware := api.AuthorizationMiddleware(userSvc, tokenSvc)
-	api.NewUserController(userSvc, log, cfg.MaxTimeout(), router, authMiddleware)
-	api.NewAuthController(authSvc, userSvc, log, cfg.MaxTimeout(), router)
+	opts := &api.Options{
+		Log:     log,
+		Timeout: cfg.MaxTimeout(),
+		Router:  router,
+	}
+
+	api.NewUserController(userSvc, opts, authMiddleware)
+	api.NewAuthController(authSvc, userSvc, opts)
 
 	httpServer := &http.Server{Addr: cfg.Addr, Handler: router}
 	if err = server.Run(httpServer, cfg.MaxTimeout(), log); err != nil {

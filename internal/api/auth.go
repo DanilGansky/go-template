@@ -24,8 +24,14 @@ type AuthController struct {
 	timeout time.Duration
 }
 
-func NewAuthController(authSvc auth.Service, userSvc user.Service, log *logrus.Logger, timeout time.Duration, r *gin.Engine) *AuthController {
-	c := &AuthController{r, authSvc, userSvc, log, timeout}
+func NewAuthController(authSvc auth.Service, userSvc user.Service, opts *Options) *AuthController {
+	c := &AuthController{
+		Engine:  opts.Router,
+		authSvc: authSvc,
+		userSvc: userSvc,
+		log:     opts.Log,
+		timeout: opts.Timeout,
+	}
 
 	group := c.Group("/auth")
 	group.POST("/login", c.Login)

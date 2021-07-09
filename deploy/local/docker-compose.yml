@@ -36,7 +36,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=service_db
     volumes: 
-      - .postgres:/var/lib/postgres/data
+      - ./.postgres:/var/lib/postgres/data
     ports: 
       - 5432:5432
 

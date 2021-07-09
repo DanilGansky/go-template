@@ -10,8 +10,8 @@
 vendor
 
 # Temp files
-.log/*
-.tmp/*
-.grafana/*
-.postgres/*
-.prometheus_data/*
+.log
+.tmp
+.grafana
+.postgres
+.prometheus_data

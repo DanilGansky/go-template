@@ -2,6 +2,7 @@ version: '3'
 services:
   grafana:
     image: grafana/grafana:latest
+    user: root
     container_name: grafana
     links:
       - prometheus-metrics
@@ -12,6 +13,7 @@ services:
 
   prometheus-metrics:
     image: prom/prometheus:v2.21.0
+    user: root
     container_name: prometheus-metrics
     volumes:
       - ./prometheus/:/etc/prometheus

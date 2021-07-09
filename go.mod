@@ -15,6 +15,7 @@ require (
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.13.0
+	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/testcontainers/testcontainers-go v0.11.1
 	github.com/ugorji/go v1.2.6 // indirect

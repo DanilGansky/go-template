@@ -12,3 +12,6 @@ vendor
 # Temp files
 .log/*
 .tmp/*
+.grafana/*
+.postgres/*
+.prometheus_data/*

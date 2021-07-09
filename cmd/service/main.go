@@ -3,6 +3,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/littlefut/go-template/pkg/metrics"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/littlefut/go-template/pkg/db"
 	"github.com/littlefut/go-template/pkg/server"
 
@@ -42,6 +46,12 @@ func main() {
 		Timeout: cfg.MaxTimeout(),
 		Router:  router,
 	}
+
+	router.Use(metrics.Middleware)
+	router.GET("/metrics", func(ctx *gin.Context) {
+		h := promhttp.Handler()
+		h.ServeHTTP(ctx.Writer, ctx.Request)
+	})
 
 	api.NewUserController(userSvc, opts, authMiddleware)
 	api.NewAuthController(authSvc, userSvc, opts)

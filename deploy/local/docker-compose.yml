@@ -1,5 +1,30 @@
 version: '3'
 services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    links:
+      - prometheus-metrics
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./.grafana:/var/lib/grafana
+
+  prometheus-metrics:
+    image: prom/prometheus:v2.21.0
+    container_name: prometheus-metrics
+    volumes:
+      - ./prometheus/:/etc/prometheus
+      - ./.prometheus_data/:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+    restart: on-failure
+
   service-db:
     image: postgres:11
     container_name: service-db
@@ -9,7 +34,7 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=service_db
     volumes: 
-      - ./.tmp:/var/lib/postgres/data
+      - .postgres:/var/lib/postgres/data
     ports: 
       - 5432:5432
 
@@ -42,4 +67,5 @@ services:
       - BCRYPT_COST=12
       - ADDR=0.0.0.0:8000
       - TIMEOUT=10
+      - ISSUER=https://example.com
     command: /wait-for-it.sh service-db:5432 -- /server
